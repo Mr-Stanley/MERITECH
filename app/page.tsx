@@ -12,9 +12,9 @@ export default function HomePage() {
         <section className="bg-gradient-to-br from-primary to-green-700 text-white py-20 px-4">
           <div className="container mx-auto text-center">
             <div className="flex justify-center mb-6">
-              <div className="relative h-24 w-24 md:h-32 md:w-32">
+              <div className="relative h-32 w-32 md:h-48 md:w-48">
                 <Image
-                  src="/images/meritech-logos.jpg"
+                  src="/images/potential 2.jpg"
                   alt="MERITECH BUILDING TECHNOLOGIES"
                   fill
                   className="object-contain"

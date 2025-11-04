@@ -41,7 +41,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-3">
             <div className="relative h-12 w-12 md:h-16 md:w-16">
               <Image
-                src="/images/meritech-logos.jpg"
+                src="/images/potential 2.jpg"
                 alt="MERITECH BUILDING TECHNOLOGIES"
                 fill
                 className="object-contain"
@@ -49,7 +49,7 @@ export default function Header() {
               />
             </div>
             <span className="text-xl md:text-2xl font-bold text-primary dark:text-green-400">
-              MERITECH BUILDING TECHNOLOGIES
+              MERITECH BUILDING TECHNOLOGY
             </span>
           </Link>
           <nav className="flex gap-4 items-center">
