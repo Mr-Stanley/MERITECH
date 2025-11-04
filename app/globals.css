@@ -1,26 +1,43 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground-rgb: 0, 0, 0;
+  /* Warm cream palette */
+  --cream-start: 255, 246, 229; /* #FFF6E5 */
+  --cream-end: 255, 240, 216;   /* #FFF0D8 */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  /* Subtle engaging layered background using warm creams - Light mode */
+  background:
+    radial-gradient(1200px 600px at 80% -20%, rgba(255, 235, 200, 0.35), transparent 60%),
+    radial-gradient(1000px 500px at -10% 20%, rgba(255, 220, 180, 0.25), transparent 55%),
+    linear-gradient(to bottom, rgba(var(--cream-start), 1), rgba(var(--cream-end), 1));
+  font-family: 'Poppins', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
 }
+
+/* Dark mode background - deep gray with subtle gradients */
+.dark body {
+  color: rgb(229, 231, 235);
+  background:
+    radial-gradient(1200px 600px at 80% -20%, rgba(30, 41, 59, 0.5), transparent 60%),
+    radial-gradient(1000px 500px at -10% 20%, rgba(15, 23, 42, 0.4), transparent 55%),
+    linear-gradient(to bottom, rgb(30, 41, 59), rgb(15, 23, 42));
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
