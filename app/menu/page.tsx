@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -35,16 +35,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCategories();
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [activeCategory]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch("/api/categories");
       if (!response.ok) throw new Error("Failed to fetch categories");
@@ -54,9 +45,9 @@ export default function MenuPage() {
       setError("Failed to load categories");
       console.error(err);
     }
-  };
+  }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const url = activeCategory
@@ -72,7 +63,16 @@ export default function MenuPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeCategory]);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+  }, [fetchCategories, fetchProducts]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const filteredProducts = products
     .filter((p) =>

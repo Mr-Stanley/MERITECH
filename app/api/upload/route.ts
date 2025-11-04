@@ -38,41 +38,6 @@ function validateFile(file: any, allowedTypes: string[], maxSizeMB: number) {
   return true;
 }
 
-async function uploadImageToS3(file: any) {
-  const filePath = file.filepath || file.path;
-  const originalName = file.originalFilename || file.name || "image";
-  const ext = originalName.split(".").pop();
-  const uniqueName = `product_${Date.now()}_${nanoid(6)}.${ext}`;
-
-  const data = fs.readFileSync(filePath);
-  const contentType = file.mimetype || file.type || "application/octet-stream";
-
-  const params = {
-    Bucket: process.env.FILEBASE_BUCKET_NAME || "",
-    Key: `products/${uniqueName}`,
-    ContentType: contentType,
-    Body: data,
-    CacheControl: "max-age=31536000",
-    Metadata: {
-      "original-filename": originalName,
-      "upload-timestamp": new Date().toISOString(),
-    },
-  };
-
-  await s3Client.send(new PutObjectCommand(params));
-
-  // Generate presigned GET URL
-  const getObjectCommand = new GetObjectCommand({
-    Bucket: process.env.FILEBASE_BUCKET_NAME || "",
-    Key: `products/${uniqueName}`,
-  });
-
-  const presignedUrl = await getSignedUrl(s3Client, getObjectCommand, {
-    expiresIn: 60 * 60 * 24 * 365,
-  }); // 1 year
-
-  return presignedUrl;
-}
 
 export async function POST(request: NextRequest) {
   if (request.method !== "POST") {

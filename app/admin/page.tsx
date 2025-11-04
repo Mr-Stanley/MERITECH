@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import QRCode from "qrcode";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -59,19 +60,7 @@ export default function AdminPage() {
   // QR Code
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCategories();
-      fetchProducts();
-      generateQRCode();
-    }
-  }, [isAuthenticated]);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/me");
       if (response.ok) {
@@ -82,9 +71,45 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const generateQRCode = async () => {
+  const fetchCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    try {
+      const response = await fetch("/api/categories");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      const data = await response.json();
+      // Ensure data is always an array
+      setCategories(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]); // Set to empty array on error
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
+  const fetchProducts = useCallback(async () => {
+    setProductsLoading(true);
+    try {
+      const response = await fetch("/api/products");
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      const data = await response.json();
+      // Ensure data is always an array
+      setProducts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setProducts([]); // Set to empty array on error
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  const generateQRCode = useCallback(async () => {
     try {
       const menuUrl = `${window.location.origin}/menu`;
       const qrDataUrl = await QRCode.toDataURL(menuUrl, {
@@ -95,7 +120,19 @@ export default function AdminPage() {
     } catch (error) {
       console.error("Error generating QR code:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCategories();
+      fetchProducts();
+      generateQRCode();
+    }
+  }, [isAuthenticated, fetchCategories, fetchProducts, generateQRCode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,42 +187,6 @@ export default function AdminPage() {
     setIsAuthenticated(false);
     setShowLogin(true);
     router.push("/admin");
-  };
-
-  const fetchCategories = async () => {
-    setCategoriesLoading(true);
-    try {
-      const response = await fetch("/api/categories");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      const data = await response.json();
-      // Ensure data is always an array
-      setCategories(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setCategories([]); // Set to empty array on error
-    } finally {
-      setCategoriesLoading(false);
-    }
-  };
-
-  const fetchProducts = async () => {
-    setProductsLoading(true);
-    try {
-      const response = await fetch("/api/products");
-      if (!response.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      const data = await response.json();
-      // Ensure data is always an array
-      setProducts(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setProducts([]); // Set to empty array on error
-    } finally {
-      setProductsLoading(false);
-    }
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -409,7 +410,7 @@ export default function AdminPage() {
                 onClick={() => setShowLogin(false)}
                 className="w-full text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-green-400 transition-colors"
               >
-                Don't have an account? Register
+                Don&apos;t have an account? Register
               </button>
             </form>
           ) : (
@@ -484,7 +485,15 @@ export default function AdminPage() {
           </h2>
           {qrCodeUrl && (
             <div className="flex flex-col items-center">
-              <img src={qrCodeUrl} alt="QR Code" className="mb-4" />
+              {/* QR Code is a data URL, so use regular img tag */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={qrCodeUrl} 
+                alt="QR Code" 
+                width={300}
+                height={300}
+                className="mb-4"
+              />
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Scan this QR code to access the menu
               </p>
@@ -598,11 +607,15 @@ export default function AdminPage() {
                     <tr key={product.id} className="border-b dark:border-gray-700">
                       <td className="p-3">
                         {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-16 h-16 object-cover rounded"
-                          />
+                          <div className="relative w-16 h-16">
+                            <Image
+                              src={product.image_url}
+                              alt={product.name}
+                              fill
+                              className="object-cover rounded"
+                              sizes="64px"
+                            />
+                          </div>
                         ) : (
                           <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
                             📦
@@ -815,17 +828,21 @@ export default function AdminPage() {
                   )}
                   {productForm.image_url && (
                     <div className="mt-2">
-                      <img
-                        src={productForm.image_url}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded"
-                      />
+                      <div className="relative w-32 h-32">
+                        <Image
+                          src={productForm.image_url}
+                          alt="Preview"
+                          fill
+                          className="object-cover rounded"
+                          sizes="128px"
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={() =>
                           setProductForm({ ...productForm, image_url: "" })
                         }
-                        className="mt-2 text-sm text-red-600 hover:text-red-700"
+                        className="mt-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                       >
                         Remove Image
                       </button>
