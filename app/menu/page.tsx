@@ -22,6 +22,7 @@ interface Product {
   description: string | null;
   price: number;
   image_url: string | null;
+  image_urls?: string[];
   category_id: number;
   status: string;
   category_name?: string;
@@ -56,7 +57,11 @@ export default function MenuPage() {
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
-      setProducts(data);
+      const normalized: Product[] = (Array.isArray(data) ? data : []).map((p: any) => ({
+        ...p,
+        image_urls: typeof p.image_urls !== 'undefined' ? p.image_urls : (typeof p.image_url === 'string' ? p.image_url.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+      }));
+      setProducts(normalized as any);
     } catch (err) {
       setError("Failed to load products");
       console.error(err);

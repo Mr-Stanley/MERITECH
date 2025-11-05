@@ -28,11 +28,9 @@ export default function AdminPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showLogin, setShowLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [registerError, setRegisterError] = useState("");
 
   // Categories
   const [categories, setCategories] = useState<Category[]>([]);
@@ -149,36 +147,11 @@ export default function AdminPage() {
 
       if (response.ok) {
         setIsAuthenticated(true);
-        setShowLogin(false);
       } else {
         setLoginError(data.error || "Login failed");
       }
     } catch (error) {
       setLoginError("An error occurred. Please try again.");
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRegisterError("");
-
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setIsAuthenticated(true);
-        setShowLogin(false);
-      } else {
-        setRegisterError(data.error || "Registration failed");
-      }
-    } catch (error) {
-      setRegisterError("An error occurred. Please try again.");
     }
   };
 
@@ -237,43 +210,34 @@ export default function AdminPage() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Client-side validation to mirror backend
-    const allowed = ["image/jpeg", "image/jpg", "image/png"];
-    if (!allowed.includes(file.type)) {
-      setUploadError("Invalid file type. Only JPG and PNG are allowed.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError("File too large. Maximum size is 5MB.");
-      return;
-    }
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
     setUploadingImage(true);
     try {
       setUploadError("");
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.success === false) {
-        setUploadError(data?.message || "Upload failed. Please try again.");
-        return;
+      const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+      const uploaded: string[] = [];
+      for (const file of files) {
+        if (!allowed.includes(file.type)) {
+          setUploadError("Invalid file type. Only images are allowed.");
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          setUploadError("File too large. Maximum size is 5MB.");
+          continue;
+        }
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await response.json();
+        if (response.ok && data?.url) {
+          uploaded.push(data.url);
+        }
       }
-
-      if (data?.url) {
-        setProductForm({ ...productForm, image_url: data.url });
-      } else {
-        setUploadError("Upload did not return a URL.");
-      }
+      const existing = productForm.image_url ? productForm.image_url.split(",").map((s) => s.trim()).filter(Boolean) : [];
+      const merged = [...existing, ...uploaded];
+      setProductForm({ ...productForm, image_url: merged.join(",") });
     } catch (error) {
       console.error("Error uploading image:", error);
       setUploadError("Unexpected error during upload.");
@@ -368,8 +332,7 @@ export default function AdminPage() {
             MERITECH Admin Login
           </h1>
 
-          {showLogin ? (
-            <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
               {loginError && (
                 <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded">
                   {loginError}
@@ -405,60 +368,7 @@ export default function AdminPage() {
               >
                 Login
               </button>
-              <button
-                type="button"
-                onClick={() => setShowLogin(false)}
-                className="w-full text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-green-400 transition-colors"
-              >
-                Don&apos;t have an account? Register
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} className="space-y-4">
-              {registerError && (
-                <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded">
-                  {registerError}
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary dark:focus:ring-green-400 focus:border-transparent transition-colors duration-300"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary dark:focus:ring-green-400 focus:border-transparent transition-colors duration-300"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-              >
-                Register
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowLogin(true)}
-                className="w-full text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-green-400 transition-colors"
-              >
-                Already have an account? Login
-              </button>
-            </form>
-          )}
+          </form>
         </div>
       </div>
     );
@@ -817,6 +727,7 @@ export default function AdminPage() {
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
+                    multiple
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary dark:focus:ring-green-400 focus:border-transparent transition-colors duration-300"
                     disabled={uploadingImage}
                   />
@@ -827,25 +738,30 @@ export default function AdminPage() {
                     <p className="text-sm text-gray-500 mt-1">Uploading...</p>
                   )}
                   {productForm.image_url && (
-                    <div className="mt-2">
-                      <div className="relative w-32 h-32">
-                        <Image
-                          src={productForm.image_url}
-                          alt="Preview"
-                          fill
-                          className="object-cover rounded"
-                          sizes="128px"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setProductForm({ ...productForm, image_url: "" })
-                        }
-                        className="mt-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                      >
-                        Remove Image
-                      </button>
+                    <div className="mt-3 grid grid-cols-3 gap-3">
+                      {productForm.image_url
+                        .split(",")
+                        .map((u) => u.trim())
+                        .filter(Boolean)
+                        .map((url) => (
+                          <div key={url} className="relative w-24 h-24">
+                            <Image src={url} alt="Preview" fill className="object-cover rounded" sizes="96px" />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const remaining = productForm.image_url
+                                  .split(",")
+                                  .map((s) => s.trim())
+                                  .filter(Boolean)
+                                  .filter((x) => x !== url);
+                                setProductForm({ ...productForm, image_url: remaining.join(",") });
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full h-5 w-5 text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
                     </div>
                   )}
                 </div>
