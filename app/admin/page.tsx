@@ -158,7 +158,6 @@ export default function AdminPage() {
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setIsAuthenticated(false);
-    setShowLogin(true);
     router.push("/admin");
   };
 
