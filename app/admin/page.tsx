@@ -6,6 +6,7 @@ import Image from "next/image";
 import QRCode from "qrcode";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { isPresignedUrl } from "@/lib/imageUtils";
 
 interface Category {
   id: number;
@@ -523,6 +524,7 @@ export default function AdminPage() {
                               fill
                               className="object-cover rounded"
                               sizes="64px"
+                              unoptimized={isPresignedUrl(product.image_url)}
                             />
                           </div>
                         ) : (
@@ -744,7 +746,14 @@ export default function AdminPage() {
                         .filter(Boolean)
                         .map((url) => (
                           <div key={url} className="relative w-24 h-24">
-                            <Image src={url} alt="Preview" fill className="object-cover rounded" sizes="96px" />
+                            <Image
+                              src={url}
+                              alt="Preview"
+                              fill
+                              className="object-cover rounded"
+                              sizes="96px"
+                              unoptimized={isPresignedUrl(url)}
+                            />
                             <button
                               type="button"
                               onClick={() => {

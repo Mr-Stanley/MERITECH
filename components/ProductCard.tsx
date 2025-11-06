@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import ProductCarousel from "./ProductCarousel";
+import { isPresignedUrl } from "@/lib/imageUtils";
 
 interface Product {
   id: number;
@@ -14,9 +17,10 @@ interface Product {
 
 interface ProductCardProps {
   product: Product;
+  onClick?: () => void;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, onClick }: ProductCardProps) {
   const combinedImages: string[] = (() => {
     if (product.image_urls && product.image_urls.length) return product.image_urls;
     if (typeof product.image_url === "string" && product.image_url.includes(",")) {
@@ -25,7 +29,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     return product.image_url ? [product.image_url] : [];
   })();
   return (
-    <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md dark:shadow-gray-900/50 overflow-hidden hover:shadow-lg dark:hover:shadow-gray-900 transition-all duration-300">
+    <div
+      className="bg-white dark:bg-gray-700 rounded-lg shadow-md dark:shadow-gray-900/50 overflow-hidden hover:shadow-lg dark:hover:shadow-gray-900 transition-all duration-300 cursor-pointer"
+      onClick={onClick}
+    >
       {combinedImages.length > 1 ? (
         <ProductCarousel images={combinedImages} alt={product.name} heightClass="h-48" />
       ) : (
@@ -37,6 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               fill
               className="object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              unoptimized={isPresignedUrl(combinedImages[0])}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500 text-4xl">📦</div>

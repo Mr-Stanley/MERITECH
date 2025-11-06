@@ -21,7 +21,7 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold mb-4 dark:text-green-400">Contact Us</h3>
             <p className="text-gray-300 dark:text-gray-400">Email: info@meritechbuilding.com</p>
-            <p className="text-gray-300 dark:text-gray-400">Phone: (+234) 730 072 5881</p>
+            <p className="text-gray-300 dark:text-gray-400">Phone: (+234) 703 072 5881</p>
           </div>
           <div>
             <h3 className="text-xl font-bold mb-4 dark:text-green-400">Hours</h3>

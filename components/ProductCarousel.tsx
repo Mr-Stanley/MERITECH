@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
+import { isPresignedUrl } from "@/lib/imageUtils";
 
 interface ProductCarouselProps {
   images: string[];
@@ -28,7 +29,14 @@ export default function ProductCarousel({ images, alt, heightClass = "h-48" }: P
   return (
     <div className={`relative w-full ${heightClass} bg-gray-100 dark:bg-gray-600 overflow-hidden rounded`}> 
       {current ? (
-        <Image src={current} alt={alt} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
+        <Image
+          src={current}
+          alt={alt}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          unoptimized={isPresignedUrl(current)}
+        />
       ) : (
         <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500 text-4xl">📦</div>
       )}

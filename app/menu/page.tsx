@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CategoryTabs from "@/components/CategoryTabs";
 import ProductCard from "@/components/ProductCard";
+import ProductImageModal from "@/components/ProductImageModal";
 import EmptyState from "@/components/EmptyState";
 import { Search } from "lucide-react";
 
@@ -35,6 +36,8 @@ export default function MenuPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -84,6 +87,16 @@ export default function MenuPage() {
       p.name.toLowerCase().includes(search.trim().toLowerCase())
     )
     .filter((p) => (activeCategory ? p.category_id === activeCategory : true));
+
+  const handleProductClick = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  }, []);
 
   const productsByCategory = categories.map((category: Category) => ({
     category,
@@ -167,24 +180,52 @@ export default function MenuPage() {
                 layout
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-8"
               >
-                {filteredProducts.map((product: Product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.03 }}
-                    className="transition-transform duration-300"
-                  >
-                    <ProductCard product={product} />
-                  </motion.div>
-                ))}
+                {filteredProducts.map((product: Product, index) => {
+                  const combinedImages: string[] = (() => {
+                    if (product.image_urls && product.image_urls.length) return product.image_urls;
+                    if (typeof product.image_url === "string" && product.image_url.includes(",")) {
+                      return product.image_url.split(",").map((s: string) => s.trim()).filter(Boolean);
+                    }
+                    return product.image_url ? [product.image_url] : [];
+                  })();
+                  return (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.03 }}
+                      className="transition-transform duration-300"
+                    >
+                      <ProductCard
+                        product={product}
+                        onClick={() => handleProductClick(product)}
+                      />
+                    </motion.div>
+                  );
+                })}
               </motion.div>
             )}
           </>
         )}
       </main>
       <Footer />
+
+      {/* Product Image Modal */}
+      {selectedProduct && (
+        <ProductImageModal
+          product={selectedProduct}
+          images={(() => {
+            if (selectedProduct.image_urls && selectedProduct.image_urls.length) return selectedProduct.image_urls;
+            if (typeof selectedProduct.image_url === "string" && selectedProduct.image_url.includes(",")) {
+              return selectedProduct.image_url.split(",").map((s: string) => s.trim()).filter(Boolean);
+            }
+            return selectedProduct.image_url ? [selectedProduct.image_url] : [];
+          })()}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 }
